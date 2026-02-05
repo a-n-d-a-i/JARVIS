@@ -1,0 +1,35 @@
+{
+  "name": "vision",
+  "version": "1.0.0",
+  "description": "NanoClaw - Telegram-to-Claude bridge",
+  "main": "dist/index.js",
+  "bin": {
+    "nanoclaw": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/a-n-d-a-i/Vision.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/a-n-d-a-i/Vision/issues"
+  },
+  "homepage": "https://github.com/a-n-d-a-i/Vision#readme",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.72.1",
+    "grammy": "^1.39.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
+}
