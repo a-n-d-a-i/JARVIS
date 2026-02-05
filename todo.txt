@@ -1,0 +1,2 @@
+cwd is currently the homedir, which doesn't play well with claude code since its tools search the whole dir by default
+	maybe subagents can solve that?

@@ -256,8 +256,8 @@ async function getAgentResponse(userMessage: string, chatId: number, ctx: Contex
 async function main(): Promise<void> {
   console.log('VISION\n');
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error('Error: ANTHROPIC_API_KEY not set');
+  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN && !process.env.CLAUDE_CODE_OAUTH_TOKEN) {
+    console.error('Error: no auth method set');
     process.exit(1);
   }
 
