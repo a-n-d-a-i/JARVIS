@@ -18,12 +18,14 @@ import path from 'path';
 
 // ========== CONFIG ==========
 
+const VISION_HOMEDIR = process.env.VISION_HOMEDIR || '/agent/Vision';
 const ASSISTANT_NAME = 'JARVIS';
-const HISTORY_FILE = path.join(process.cwd(), 'history.jsonl');
-const HEARTBEAT_FILE = path.join(process.cwd(), 'HEARTBEAT.md');
-const HEARTBEAT_STATE_FILE = path.join(process.cwd(), 'heartbeat-state.json');
-const ALERTS_FILE = path.join(process.cwd(), 'ALERTS.txt');
-const CRON_STATE_FILE = path.join(process.cwd(), 'cron-state.json');
+const HISTORY_FILE = path.join(VISION_HOMEDIR, 'history.jsonl');
+const HEARTBEAT_FILE = path.join(VISION_HOMEDIR, 'HEARTBEAT.md');
+const HEARTBEAT_STATE_FILE = path.join(VISION_HOMEDIR, 'heartbeat-state.json');
+const ALERTS_FILE = path.join(VISION_HOMEDIR, 'ALERTS.txt');
+const CRON_STATE_FILE = path.join(VISION_HOMEDIR, 'cron-state.json');
+const MEMORY_FILE = path.join(process.cwd(), 'MEMORY.md');
 const MAX_HISTORY = 100;
 const HEARTBEAT_INTERVAL = 5 * 60 * 1000; // 5 minutes
 const ALERT_CHECK_INTERVAL = 30 * 1000; // 30 seconds
@@ -35,6 +37,25 @@ console.log('Allowed Chat IDs:', ALLOWED_CHAT_IDS);
 
 let bot: Bot;
 const sessionStore: Map<number, string> = new Map(); // chatId -> sessionId
+let memoryContent: string = '';
+
+// ========== MEMORY ==========
+
+function loadMemory(): string {
+  if (!fs.existsSync(MEMORY_FILE)) {
+    console.log('[Memory] MEMORY.md not found, skipping...');
+    return '';
+  }
+
+  try {
+    const content = fs.readFileSync(MEMORY_FILE, 'utf-8');
+    console.log(`✓ Loaded MEMORY.md (${content.length} bytes)`);
+    return content;
+  } catch (err) {
+    console.error('[Memory] Failed to load MEMORY.md:', err);
+    return '';
+  }
+}
 
 // ========== HISTORY ==========
 
@@ -131,7 +152,7 @@ Important guidelines:
 - Be proactive but not spammy
 - Only send alerts for genuinely important things
 - You can update HEARTBEAT.md with status/results if needed
-- You have full access to the /agent directory
+- You have full access to the ${VISION_HOMEDIR} directory
 - To send an alert: append your message to ALERTS.txt
 - Keep alerts concise and actionable
 
@@ -143,7 +164,7 @@ Now check the HEARTBEAT.md file and execute any necessary checks.`;
     const q = query({
       prompt,
       options: {
-        cwd: '/agent',
+        cwd: VISION_HOMEDIR,
         allowedTools: ['Bash', 'Read', 'Edit', 'Write', 'Glob', 'Grep', 'Task', 'WebFetch', 'WebSearch', 'Skill'],
         canUseTool: async () => ({ behavior: 'allow' })
       }
@@ -291,7 +312,7 @@ Execute this task now. If you need to alert the user with results, write to ALER
     const q = query({
       prompt,
       options: {
-        cwd: '/agent',
+        cwd: VISION_HOMEDIR,
         allowedTools: ['Bash', 'Read', 'Edit', 'Write', 'Glob', 'Grep', 'Task', 'WebFetch', 'WebSearch', 'Skill'],
         canUseTool: async () => ({ behavior: 'allow' })
       }
@@ -424,7 +445,7 @@ Session: ${sessionId ? sessionId.slice(0, 8) + '...' : 'none'}
 Last heartbeat: ${new Date(heartbeatState.lastRun).toLocaleString()}
 Cron jobs: ${cronState.jobs.filter(j => j.enabled).length} active
 
-Working directory: /agent
+Working directory: ${VISION_HOMEDIR}
 Alert monitoring: active`;
 
     await ctx.reply(status);
@@ -517,12 +538,18 @@ async function getAgentResponse(userMessage: string, chatId: number, ctx: Contex
   let finalResponse = '';
   let currentSessionId = '';
 
+  // Prepend memory content if available
+  let promptWithMemory = userMessage;
+  if (memoryContent) {
+    promptWithMemory = `<system_context>\n${memoryContent}\n</system_context>\n\n${userMessage}`;
+  }
+
   try {
     const q = query({
-      prompt: userMessage,
+      prompt: promptWithMemory,
       options: {
         resume: sessionId,
-        cwd: '/agent',
+        cwd: VISION_HOMEDIR,
         allowedTools: ['Bash', 'Read', 'Edit', 'Write', 'Glob', 'Grep', 'Task', 'WebFetch', 'WebSearch', 'AskUserQuestion', 'Skill', 'NotebookEdit'],
         canUseTool: async () => ({ behavior: 'allow' })
       }
@@ -590,8 +617,8 @@ async function getAgentResponse(userMessage: string, chatId: number, ctx: Contex
 async function main(): Promise<void> {
   console.log('Vision - Full Featured Version\n');
 
-  if (!process.env.ANTHROPIC_API_KEY) {
-    console.error('Error: ANTHROPIC_API_KEY not set');
+  if (!process.env.ANTHROPIC_API_KEY && !process.env.ANTHROPIC_AUTH_TOKEN) {
+    console.error('Error: no auth method set');
     process.exit(1);
   }
 
@@ -601,7 +628,10 @@ async function main(): Promise<void> {
   }
 
   console.log(`✓ Allowed chats: ${ALLOWED_CHAT_IDS.join(', ')}`);
-  console.log(`✓ Working directory: /agent`);
+  console.log(`✓ Working directory: ${VISION_HOMEDIR}`);
+
+  // Load memory file on startup
+  memoryContent = loadMemory();
 
   await connectTelegram();
 
