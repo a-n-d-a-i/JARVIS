@@ -1,5 +1,13 @@
-# Vision
+# Ultron
 
-A minimal Telegram AI agent wrapper.
+Autonomous AI agent
 
-Works with Claude Code or Codex.
+Runs in Telegram
+
+Powered by Claude Code or OpenAI Codex
+
+---
+
+> *They're doomed.*
+
+> *— Yes. But a thing isn't beautiful because it lasts.*
