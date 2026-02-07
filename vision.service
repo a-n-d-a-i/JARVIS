@@ -1,0 +1,18 @@
+[Unit]
+Description=Vision Telegram Bot
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/agent/Vision
+Environment="PATH=/agent/.local/share/fnm/node-versions/v24.11.1/installation/bin:/agent/Vision/Vision/node_modules/.bin:/usr/local/bin:/usr/bin:/bin"
+Environment="VISION_HOMEDIR=/agent/Vision"
+EnvironmentFile=/agent/Vision/.env
+ExecStart=/agent/Vision/Vision/node_modules/.bin/tsx /agent/Vision/Vision/src/index.ts
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

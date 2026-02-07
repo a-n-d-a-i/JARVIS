@@ -1,0 +1,1 @@
+ANTHROPIC_BASE_URL="https://api.z.ai/api/anthropic" ANTHROPIC_API_KEY="$ZAI_API_KEY" npm run dev
